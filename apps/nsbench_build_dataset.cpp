@@ -15,6 +15,8 @@
 
 namespace {
 
+const char* kDefaultSuiteDir = "VSIterate";
+
 std::string PathJoin(const std::string& base, const std::string& leaf) {
     if (base.empty()) {
         return leaf;
@@ -80,6 +82,7 @@ bool ParseArgs(int argc, char** argv, nsbench::DatasetBuildOptions* options, std
         return false;
     }
 
+    std::string suite_root;
     for (int i = 1; i < argc; ++i) {
         const std::string arg(argv[i]);
         auto require_value = [&](const char* name) -> std::string {
@@ -89,7 +92,9 @@ bool ParseArgs(int argc, char** argv, nsbench::DatasetBuildOptions* options, std
             return std::string(argv[++i]);
         };
 
-        if (arg == "--output-root") {
+        if (arg == "--root") {
+            suite_root = require_value("--root");
+        } else if (arg == "--output-root") {
             options->output_root = require_value("--output-root");
         } else if (arg == "--depths") {
             options->depths = ParseDepthList(require_value("--depths"));
@@ -115,9 +120,13 @@ bool ParseArgs(int argc, char** argv, nsbench::DatasetBuildOptions* options, std
         }
     }
 
+    if (!suite_root.empty()) {
+        options->output_root = PathJoin(PathJoin(suite_root, kDefaultSuiteDir), "datasets");
+    }
+
     if (options->output_root.empty()) {
         if (error) {
-            *error = "--output-root is required";
+            *error = "--output-root or --root is required";
         }
         return false;
     }

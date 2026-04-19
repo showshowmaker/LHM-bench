@@ -12,6 +12,36 @@
 - `results/masstree_depth_sweep.csv`
 - `results/rocksdb_depth_sweep.csv`
 
+如果你希望把测试过程中生成的运行期数据统一收拢到某个根目录下，可以使用：
+
+- `--artifact-root <root>`
+
+此时目录约定为：
+
+- 所有与本组“迭代式对比实验”相关的运行期产物统一放在 `<root>/VSIterate/`
+
+例如给定 `--artifact-root ./root`，则：
+
+- LHM 结果 CSV 放在 `./root/VSIterate/masstree_depth_sweep.csv`
+- 迭代式结果 CSV 放在 `./root/VSIterate/rocksdb_depth_sweep.csv`
+- RocksDB 中间目录放在 `./root/VSIterate/rocksdb_nsbench/`
+
+如果你希望把“数据集生成 + benchmark 运行”的所有产物都统一收拢到同一个总根目录下，可以使用：
+
+- `nsbench_build_dataset --root <root>`
+
+此时数据集默认会放在：
+
+- `<root>/VSIterate/datasets/`
+
+配合 `nsbench_run --artifact-root <root>` 后，完整目录布局为：
+
+- `<root>/VSIterate/datasets/`
+- `<root>/VSIterate/masstree_depth_sweep.csv`
+- `<root>/VSIterate/rocksdb_depth_sweep.csv`
+- `<root>/VSIterate/manifest_list.txt`
+- `<root>/VSIterate/rocksdb_nsbench/`
+
 ## 1. 前置条件
 
 下面的说明默认满足以下条件：
@@ -69,8 +99,37 @@ cmake --build build -j"$(nproc)"
 示例：
 
 ```bash
-mkdir -p datasets results
+mkdir -p root
 
+./build/nsbench_build_dataset \
+  --root ./root \
+  --depths 1,2,4,8,16,32,64 \
+  --siblings-per-dir 256 \
+  --files-per-leaf 256 \
+  --positive-queries 50000 \
+  --negative-queries 50000
+```
+
+执行后会生成：
+
+```text
+root/
+  VSIterate/
+    datasets/
+      depth_01/
+        manifest.txt
+        records.tsv
+        positive_queries.tsv
+        negative_queries.tsv
+      depth_02/
+      depth_04/
+      ...
+      depth_64/
+```
+
+如果你更喜欢手动指定数据集目录，也仍然可以继续使用：
+
+```bash
 ./build/nsbench_build_dataset \
   --output-root ./datasets \
   --depths 1,2,4,8,16,32,64 \
@@ -80,7 +139,7 @@ mkdir -p datasets results
   --negative-queries 50000
 ```
 
-执行后会生成：
+此时会生成：
 
 ```text
 datasets/
@@ -106,10 +165,11 @@ LHM 示例：
 ```bash
 ./build/nsbench_run \
   --backend masstree \
-  --manifest ./datasets/depth_08/manifest.txt \
+  --manifest ./root/datasets/depth_08/manifest.txt \
+  --artifact-root ./root \
   --warmup 10000 \
   --repeats 10 \
-  --output-csv ./results/masstree_depth08.csv
+  --output-csv ./root/VSLHM/masstree_depth08.csv
 ```
 
 迭代式基线示例：
@@ -117,10 +177,11 @@ LHM 示例：
 ```bash
 ./build/nsbench_run \
   --backend rocksdb \
-  --manifest ./datasets/depth_08/manifest.txt \
+  --manifest ./root/datasets/depth_08/manifest.txt \
+  --artifact-root ./root \
   --warmup 10000 \
   --repeats 10 \
-  --output-csv ./results/rocksdb_depth08.csv
+  --output-csv ./root/VSIterate/rocksdb_depth08.csv
 ```
 
 如果还要同时测 negative lookup，可加上：
@@ -128,11 +189,12 @@ LHM 示例：
 ```bash
 ./build/nsbench_run \
   --backend masstree \
-  --manifest ./datasets/depth_08/manifest.txt \
+  --manifest ./root/datasets/depth_08/manifest.txt \
+  --artifact-root ./root \
   --warmup 10000 \
   --repeats 10 \
   --include-negative \
-  --output-csv ./results/masstree_depth08_with_negative.csv
+  --output-csv ./root/VSLHM/masstree_depth08_with_negative.csv
 ```
 
 ## 5. 运行完整深度扫描
@@ -142,7 +204,7 @@ LHM 示例：
 ### 方式 A：使用自带 Bash 脚本
 
 ```bash
-bash ./scripts/run_nsbench_depth_sweep.sh ./build/nsbench_run ./datasets ./results
+bash ./scripts/run_nsbench_depth_sweep.sh ./build/nsbench_run ./datasets ./root
 ```
 
 该脚本默认会：
@@ -151,8 +213,10 @@ bash ./scripts/run_nsbench_depth_sweep.sh ./build/nsbench_run ./datasets ./resul
 - 运行 `masstree`
 - 运行 `rocksdb`
 - 输出：
-  - `results/masstree_depth_sweep.csv`
-  - `results/rocksdb_depth_sweep.csv`
+  - `root/VSIterate/masstree_depth_sweep.csv`
+  - `root/VSIterate/rocksdb_depth_sweep.csv`
+  - `root/VSIterate/manifest_list.txt`
+  - `root/VSIterate/rocksdb_nsbench`
 
 你也可以通过环境变量覆盖默认参数：
 
@@ -162,15 +226,30 @@ REPEATS=10 \
 BACKENDS="masstree rocksdb" \
 INCLUDE_NEGATIVE=0 \
 NO_VERIFY=0 \
-bash ./scripts/run_nsbench_depth_sweep.sh ./build/nsbench_run ./datasets ./results
+bash ./scripts/run_nsbench_depth_sweep.sh ./build/nsbench_run ./datasets ./root
 ```
+
+### 方式 A2：使用一键全流程脚本
+
+如果你希望通过一个总根目录同时完成“生成数据集 + 批量运行 benchmark”，可以直接执行：
+
+```bash
+bash ./scripts/run_nsbench_full_pipeline.sh ./build/nsbench_build_dataset ./build/nsbench_run ./root
+```
+
+该脚本会自动完成：
+
+- 在 `./root/VSIterate/datasets/` 下生成多深度数据集
+- 运行 `masstree`
+- 运行 `rocksdb`
+- 在 `./root/VSIterate/` 下收集所有相关产物
 
 ### 方式 B：直接使用 `nsbench_run` 配合 manifest 列表
 
 先生成 manifest 列表文件：
 
 ```bash
-find ./datasets -mindepth 2 -maxdepth 2 -name manifest.txt | sort > ./results/manifest_list.txt
+find ./root/VSIterate/datasets -mindepth 2 -maxdepth 2 -name manifest.txt | sort > ./root/VSIterate/manifest_list.txt
 ```
 
 然后运行 LHM：
@@ -178,10 +257,11 @@ find ./datasets -mindepth 2 -maxdepth 2 -name manifest.txt | sort > ./results/ma
 ```bash
 ./build/nsbench_run \
   --backend masstree \
-  --manifest-list ./results/manifest_list.txt \
+  --manifest-list ./root/VSIterate/manifest_list.txt \
+  --artifact-root ./root \
   --warmup 10000 \
   --repeats 10 \
-  --output-csv ./results/masstree_depth_sweep.csv
+  --output-csv ./root/VSIterate/masstree_depth_sweep.csv
 ```
 
 再运行迭代式基线：
@@ -189,10 +269,11 @@ find ./datasets -mindepth 2 -maxdepth 2 -name manifest.txt | sort > ./results/ma
 ```bash
 ./build/nsbench_run \
   --backend rocksdb \
-  --manifest-list ./results/manifest_list.txt \
+  --manifest-list ./root/VSIterate/manifest_list.txt \
+  --artifact-root ./root \
   --warmup 10000 \
   --repeats 10 \
-  --output-csv ./results/rocksdb_depth_sweep.csv
+  --output-csv ./root/VSIterate/rocksdb_depth_sweep.csv
 ```
 
 你也可以直接重复传多个 `--manifest`：
@@ -200,41 +281,52 @@ find ./datasets -mindepth 2 -maxdepth 2 -name manifest.txt | sort > ./results/ma
 ```bash
 ./build/nsbench_run \
   --backend masstree \
-  --manifest ./datasets/depth_01/manifest.txt \
-  --manifest ./datasets/depth_02/manifest.txt \
-  --manifest ./datasets/depth_04/manifest.txt \
-  --manifest ./datasets/depth_08/manifest.txt \
-  --output-csv ./results/masstree_partial_sweep.csv
+  --manifest ./root/VSIterate/datasets/depth_01/manifest.txt \
+  --manifest ./root/VSIterate/datasets/depth_02/manifest.txt \
+  --manifest ./root/VSIterate/datasets/depth_04/manifest.txt \
+  --manifest ./root/VSIterate/datasets/depth_08/manifest.txt \
+  --artifact-root ./root \
+  --output-csv ./root/VSIterate/masstree_partial_sweep.csv
 ```
 
 ## 6. 结果文件在哪里
 
-主要结果文件在你通过 `--output-csv` 或批量脚本指定的输出目录中。
+主要结果文件在你通过 `--output-csv` 或 `--artifact-root` 指定的位置中。
 
 典型目录结构如下：
 
 ```text
-results/
-  manifest_list.txt
-  masstree_depth_sweep.csv
-  rocksdb_depth_sweep.csv
+root/
+  VSIterate/
+    datasets/
+      depth_01/
+      depth_02/
+      ...
+    manifest_list.txt
+    masstree_depth_sweep.csv
+    rocksdb_depth_sweep.csv
+    rocksdb_nsbench/
 ```
 
 如果你手动跑了单个深度，也可能看到：
 
 ```text
-results/
-  masstree_depth08.csv
-  rocksdb_depth08.csv
+root/
+  VSIterate/
+    datasets/
+      depth_08/
+    masstree_depth08.csv
+    rocksdb_depth08.csv
+    rocksdb_nsbench/
 ```
 
 原始数据集文件保留在：
 
 ```text
-datasets/depth_01/
-datasets/depth_02/
+root/VSIterate/datasets/depth_01/
+root/VSIterate/datasets/depth_02/
 ...
-datasets/depth_64/
+root/VSIterate/datasets/depth_64/
 ```
 
 ## 7. 如何查看结果
@@ -244,22 +336,22 @@ datasets/depth_64/
 查看前几行：
 
 ```bash
-head -n 5 ./results/masstree_depth_sweep.csv
-head -n 5 ./results/rocksdb_depth_sweep.csv
+head -n 5 ./root/VSIterate/masstree_depth_sweep.csv
+head -n 5 ./root/VSIterate/rocksdb_depth_sweep.csv
 ```
 
 按 `positive` 查询过滤：
 
 ```bash
-grep ",positive," ./results/masstree_depth_sweep.csv | head
-grep ",positive," ./results/rocksdb_depth_sweep.csv | head
+grep ",positive," ./root/VSIterate/masstree_depth_sweep.csv | head
+grep ",positive," ./root/VSIterate/rocksdb_depth_sweep.csv | head
 ```
 
 如果系统安装了 `csvlook`，也可以更直观地看：
 
 ```bash
-csvlook ./results/masstree_depth_sweep.csv | less -S
-csvlook ./results/rocksdb_depth_sweep.csv | less -S
+csvlook ./root/VSIterate/masstree_depth_sweep.csv | less -S
+csvlook ./root/VSIterate/rocksdb_depth_sweep.csv | less -S
 ```
 
 ### 用 Python 或 Pandas 查看
@@ -268,8 +360,8 @@ csvlook ./results/rocksdb_depth_sweep.csv | less -S
 python3 - <<'PY'
 import pandas as pd
 
-lhm = pd.read_csv("results/masstree_depth_sweep.csv")
-itv = pd.read_csv("results/rocksdb_depth_sweep.csv")
+lhm = pd.read_csv("root/VSIterate/masstree_depth_sweep.csv")
+itv = pd.read_csv("root/VSIterate/rocksdb_depth_sweep.csv")
 
 print("LHM")
 print(lhm[["depth", "query_kind", "avg_ns", "p50_ns", "p99_ns", "avg_index_steps"]].head())
@@ -312,8 +404,8 @@ python3 - <<'PY'
 import pandas as pd
 import matplotlib.pyplot as plt
 
-lhm = pd.read_csv("results/masstree_depth_sweep.csv")
-itv = pd.read_csv("results/rocksdb_depth_sweep.csv")
+lhm = pd.read_csv("root/VSIterate/masstree_depth_sweep.csv")
+itv = pd.read_csv("root/VSIterate/rocksdb_depth_sweep.csv")
 
 lhm = lhm[lhm["query_kind"] == "positive"].groupby("depth", as_index=False).mean(numeric_only=True)
 itv = itv[itv["query_kind"] == "positive"].groupby("depth", as_index=False).mean(numeric_only=True)
@@ -327,14 +419,14 @@ plt.xlabel("Depth")
 plt.ylabel("Latency (ns)")
 plt.legend()
 plt.tight_layout()
-plt.savefig("results/depth_sensitivity.png", dpi=200)
-print("wrote results/depth_sensitivity.png")
+plt.savefig("root/depth_sensitivity.png", dpi=200)
+print("wrote root/depth_sensitivity.png")
 PY
 ```
 
 生成的图会在：
 
-- `results/depth_sensitivity.png`
+- `root/depth_sensitivity.png`
 
 ## 10. 推荐的完整实验命令
 
@@ -346,23 +438,17 @@ cd /path/to/Zyb
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j"$(nproc)"
 
-mkdir -p datasets results
+mkdir -p root
 
-./build/nsbench_build_dataset \
-  --output-root ./datasets \
-  --depths 1,2,4,8,16,32,64 \
-  --siblings-per-dir 256 \
-  --files-per-leaf 256 \
-  --positive-queries 50000 \
-  --negative-queries 50000
-
-bash ./scripts/run_nsbench_depth_sweep.sh ./build/nsbench_run ./datasets ./results
+bash ./scripts/run_nsbench_full_pipeline.sh ./build/nsbench_build_dataset ./build/nsbench_run ./root
 ```
 
 然后重点查看：
 
-- `results/masstree_depth_sweep.csv`
-- `results/rocksdb_depth_sweep.csv`
-- 可选的绘图结果 `results/depth_sensitivity.png`
+- `root/datasets/`
+- `root/VSIterate/datasets/`
+- `root/VSIterate/masstree_depth_sweep.csv`
+- `root/VSIterate/rocksdb_depth_sweep.csv`
+- 可选的绘图结果 `root/depth_sensitivity.png`
 
 这就是从编译、生成数据、批量运行到查看结果的完整流程。

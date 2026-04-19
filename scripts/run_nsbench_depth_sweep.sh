@@ -3,27 +3,30 @@ set -euo pipefail
 
 exe_path="${1:-}"
 dataset_root="${2:-./datasets}"
-output_dir="${3:-./results}"
+artifact_root="${3:-./root}"
 warmup="${WARMUP:-10000}"
 repeats="${REPEATS:-10}"
 backends="${BACKENDS:-masstree rocksdb}"
 include_negative="${INCLUDE_NEGATIVE:-0}"
 no_verify="${NO_VERIFY:-0}"
+suite_dir="${SUITE_DIR:-VSIterate}"
 
 if [[ -z "${exe_path}" ]]; then
-  echo "usage: $0 <nsbench_run> [dataset_root] [output_dir]" >&2
+  echo "usage: $0 <nsbench_run> [dataset_root] [artifact_root]" >&2
   exit 1
 fi
 
-mkdir -p "${output_dir}"
-manifest_list="${output_dir}/manifest_list.txt"
+run_root="${artifact_root}/${suite_dir}"
+mkdir -p "${run_root}"
+manifest_list="${run_root}/manifest_list.txt"
 find "${dataset_root}" -mindepth 2 -maxdepth 2 -name manifest.txt | sort > "${manifest_list}"
 
 for backend in ${backends}; do
-  csv_path="${output_dir}/${backend}_depth_sweep.csv"
+  csv_path="${run_root}/${backend}_depth_sweep.csv"
   args=(
     --backend "${backend}"
     --manifest-list "${manifest_list}"
+    --artifact-root "${artifact_root}"
     --warmup "${warmup}"
     --repeats "${repeats}"
     --output-csv "${csv_path}"

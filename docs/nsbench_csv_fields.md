@@ -23,6 +23,33 @@
 - `avg_index_steps`：平均后端索引探测步数或路由步数
 - `avg_steps`：兼容字段，目前等于 `avg_index_steps`
 
+如果运行时传入了 `--artifact-root <root>`，则测试过程中产生的运行期数据会统一收拢到：
+
+- `<root>/VSIterate/`
+
+其中：
+
+- `masstree` 结果 CSV 会放在 `<root>/VSIterate/masstree_depth_sweep.csv`
+- `rocksdb` 结果 CSV 会放在 `<root>/VSIterate/rocksdb_depth_sweep.csv`
+- `manifest_list.txt` 会放在 `<root>/VSIterate/manifest_list.txt`
+- `rocksdb` backend 的中间数据库目录默认会放在 `<root>/VSIterate/rocksdb_nsbench`
+
+如果数据集生成阶段使用：
+
+- `nsbench_build_dataset --root <root>`
+
+则数据集会统一收拢到：
+
+- `<root>/VSIterate/datasets/`
+
+此时完整产物目录布局为：
+
+- `<root>/VSIterate/datasets/`
+- `<root>/VSIterate/masstree_depth_sweep.csv`
+- `<root>/VSIterate/rocksdb_depth_sweep.csv`
+- `<root>/VSIterate/manifest_list.txt`
+- `<root>/VSIterate/rocksdb_nsbench/`
+
 用于“深度敏感性”实验时，推荐重点关注：
 
 - 绘制 `p50_ns` 和 `p99_ns` 随 `depth` 的变化曲线

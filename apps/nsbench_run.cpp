@@ -24,10 +24,13 @@
 
 namespace {
 
+const char* kDefaultSuiteDir = "VSIterate";
+
 struct CliOptions {
     std::string backend{"masstree"};
     std::vector<std::string> manifest_paths;
     std::vector<std::string> manifest_list_paths;
+    std::string artifact_root;
     std::string db_path;
     uint32_t warmup_queries{10000};
     uint32_t repeats{5};
@@ -91,6 +94,13 @@ bool IsAbsolutePath(const std::string& path) {
     return path.size() > 1 && path[1] == ':';
 }
 
+std::string BuildArtifactDir(const CliOptions& options) {
+    if (options.artifact_root.empty()) {
+        return "";
+    }
+    return PathJoin(options.artifact_root, kDefaultSuiteDir);
+}
+
 bool ReadManifestListFile(const std::string& list_path,
                           std::vector<std::string>* manifest_paths,
                           std::string* error) {
@@ -143,6 +153,8 @@ bool ParseArgs(int argc, char** argv, CliOptions* options, std::string* error) {
             options->manifest_paths.push_back(require_value("--manifest"));
         } else if (arg == "--manifest-list") {
             options->manifest_list_paths.push_back(require_value("--manifest-list"));
+        } else if (arg == "--artifact-root") {
+            options->artifact_root = require_value("--artifact-root");
         } else if (arg == "--db-path") {
             options->db_path = require_value("--db-path");
         } else if (arg == "--warmup") {
@@ -180,7 +192,10 @@ bool ParseArgs(int argc, char** argv, CliOptions* options, std::string* error) {
     options->manifest_paths.erase(std::unique(options->manifest_paths.begin(), options->manifest_paths.end()),
                                   options->manifest_paths.end());
 
-    if (options->output_csv.empty()) {
+    if (options->output_csv.empty() && !options.artifact_root.empty()) {
+        options->output_csv =
+            PathJoin(BuildArtifactDir(*options), options.backend + "_depth_sweep.csv");
+    } else if (options->output_csv.empty()) {
         options->output_csv = PathJoin(DirName(options->manifest_paths.front()),
                                        options->backend + "_results.csv");
     }
@@ -215,9 +230,13 @@ std::unique_ptr<nsbench::IPathResolver> CreateResolver(const CliOptions& options
 #if NSBENCH_HAVE_ROCKSDB
     if (options.backend == "rocksdb") {
         nsbench::RocksResolverOptions rocks_options;
-        rocks_options.db_path = options.db_path.empty()
-                                    ? PathJoin(DirName(manifest_path), "rocksdb_nsbench")
-                                    : options.db_path;
+        if (!options.db_path.empty()) {
+            rocks_options.db_path = options.db_path;
+        } else if (!options.artifact_root.empty()) {
+            rocks_options.db_path = PathJoin(BuildArtifactDir(options), "rocksdb_nsbench");
+        } else {
+            rocks_options.db_path = PathJoin(DirName(manifest_path), "rocksdb_nsbench");
+        }
         return std::unique_ptr<nsbench::IPathResolver>(
             new nsbench::RocksIterativeResolver(std::move(rocks_options)));
     }
@@ -276,6 +295,11 @@ int main(int argc, char** argv) {
         std::string error;
         if (!ParseArgs(argc, argv, &options, &error)) {
             std::cerr << "nsbench_run: " << error << '\n';
+            return 1;
+        }
+
+        if (!options.artifact_root.empty() && !EnsureDirectory(BuildArtifactDir(options))) {
+            std::cerr << "nsbench_run: failed to create artifact root directory\n";
             return 1;
         }
 
