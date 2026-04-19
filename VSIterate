@@ -1,4 +1,7 @@
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j"$(nproc)"
+
 bash ./scripts/run_nsbench_full_pipeline.sh \
   ./build/nsbench_build_dataset \
   ./build/nsbench_run \
-  ./root
+  /mnt/batchtest/lhm-bench

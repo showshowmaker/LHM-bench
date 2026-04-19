@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
 project(ZybNsBench C CXX)
 
-set(CMAKE_CXX_STANDARD 14)
+# RocksDB's current CMake build expects a C++20-capable consumer toolchain.
+# If the parent project pins a lower standard before add_subdirectory(),
+# RocksDB inherits it and fails with a large wave of std::optional/variant
+# and defaulted comparison errors.
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 11)
 
