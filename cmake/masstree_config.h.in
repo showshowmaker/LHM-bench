@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MASSTREE_CONFIG_H_INCLUDED
+#define MASSTREE_CONFIG_H_INCLUDED 1
 
 #define HAVE_CONFIG_H 1
 
@@ -41,6 +42,7 @@
 #define HAVE_UNALIGNED_ACCESS 1
 #define HAVE_INDIFFERENT_ALIGNMENT 1
 #define CACHE_LINE_SIZE 64
+#define MASSTREE_MAXKEYLEN 1024
 
 #define ENABLE_ASSERTIONS 0
 #define ENABLE_PRECONDITIONS 0
@@ -59,3 +61,46 @@
 #define SIZEOF_LONG 8
 #define SIZEOF_LONG_LONG 8
 #define SIZEOF_VOID_P 8
+
+#if !FORCE_ENABLE_ASSERTIONS && !ENABLE_ASSERTIONS
+# define NDEBUG 1
+#endif
+
+extern void fail_always_assert(const char* file, int line, const char* assertion,
+                               const char* message = 0) __attribute__((noreturn));
+#define always_assert(x, ...) \
+    do { \
+        if (!(x)) fail_always_assert(__FILE__, __LINE__, #x, ## __VA_ARGS__); \
+    } while (0)
+#define mandatory_assert always_assert
+
+extern void fail_masstree_invariant(const char* file, int line, const char* assertion,
+                                    const char* message = 0) __attribute__((noreturn));
+#if FORCE_ENABLE_ASSERTIONS || (!defined(ENABLE_INVARIANTS) && ENABLE_ASSERTIONS) || ENABLE_INVARIANTS
+#define masstree_invariant(x, ...) \
+    do { \
+        if (!(x)) fail_masstree_invariant(__FILE__, __LINE__, #x, ## __VA_ARGS__); \
+    } while (0)
+#else
+#define masstree_invariant(x, ...) do { } while (0)
+#endif
+
+extern void fail_masstree_precondition(const char* file, int line, const char* assertion,
+                                       const char* message = 0) __attribute__((noreturn));
+#if FORCE_ENABLE_ASSERTIONS || (!defined(ENABLE_PRECONDITIONS) && ENABLE_ASSERTIONS) || ENABLE_PRECONDITIONS
+#define masstree_precondition(x, ...) \
+    do { \
+        if (!(x)) fail_masstree_precondition(__FILE__, __LINE__, #x, ## __VA_ARGS__); \
+    } while (0)
+#else
+#define masstree_precondition(x, ...) do { } while (0)
+#endif
+
+#ifndef invariant
+#define invariant masstree_invariant
+#endif
+#ifndef precondition
+#define precondition masstree_precondition
+#endif
+
+#endif

@@ -45,6 +45,8 @@ set(NSBENCH_MASSTREE_SOURCES
     MasstreeLHM/string_slice.cc
 )
 
+set_source_files_properties(MasstreeLHM/clp.c PROPERTIES LANGUAGE CXX)
+
 set(ROCKSDB_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/third_party/rocksdb)
 if(EXISTS ${ROCKSDB_ROOT}/CMakeLists.txt)
     set(ROCKSDB_BUILD_SHARED OFF CACHE BOOL "" FORCE)
@@ -110,6 +112,7 @@ if(NOT WIN32)
             ${CMAKE_CURRENT_SOURCE_DIR}/MasstreeLHM
             ${CMAKE_CURRENT_BINARY_DIR}/generated
     )
+    target_compile_options(nsbench_masstree PRIVATE -include config.h)
     target_compile_definitions(nsbench_masstree PUBLIC NSBENCH_HAVE_ROCKSDB=${NSBENCH_HAVE_ROCKSDB_FLAG})
     target_link_libraries(nsbench_masstree PUBLIC nsbench_common)
 

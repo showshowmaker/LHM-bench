@@ -121,15 +121,15 @@ bool RocksIterativeResolver::Open(std::string* error) {
         return true;
     }
 
-    rocksdb::DB* raw = nullptr;
-    const rocksdb::Status status = rocksdb::DB::Open(*db_options_, options_.db_path, &raw);
+    std::unique_ptr<rocksdb::DB> db;
+    const rocksdb::Status status = rocksdb::DB::Open(*db_options_, options_.db_path, &db);
     if (!status.ok()) {
         if (error) {
             *error = status.ToString();
         }
         return false;
     }
-    db_.reset(raw);
+    db_ = std::move(db);
     return true;
 }
 
