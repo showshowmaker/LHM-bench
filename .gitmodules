@@ -1,0 +1,6 @@
+[submodule "MasstreeLHM"]
+	path = MasstreeLHM
+	url = https://github.com/showshowmaker/MasstreeLHM.git
+[submodule "third_party/rocksdb"]
+	path = third_party/rocksdb
+	url = https://github.com/facebook/rocksdb.git

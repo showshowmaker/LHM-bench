@@ -1,0 +1,13 @@
+build/
+build-mingw/
+datasets/
+results/
+tmp_datasets/
+*.o
+*.obj
+*.a
+*.lib
+*.dll
+*.so
+*.exe
+*.out
