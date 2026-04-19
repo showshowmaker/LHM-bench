@@ -5,3 +5,6 @@ bash ./scripts/run_nsbench_full_pipeline.sh \
   ./build/nsbench_build_dataset \
   ./build/nsbench_run \
   /mnt/batchtest/lhm-bench
+
+python3 ./scripts/analyze_nsbench_results.py \
+  --suite-dir ./mnt/batchtest/lhm-bench/VSIterate
