@@ -192,9 +192,9 @@ bool ParseArgs(int argc, char** argv, CliOptions* options, std::string* error) {
     options->manifest_paths.erase(std::unique(options->manifest_paths.begin(), options->manifest_paths.end()),
                                   options->manifest_paths.end());
 
-    if (options->output_csv.empty() && !options.artifact_root.empty()) {
+    if (options->output_csv.empty() && !options->artifact_root.empty()) {
         options->output_csv =
-            PathJoin(BuildArtifactDir(*options), options.backend + "_depth_sweep.csv");
+            PathJoin(BuildArtifactDir(*options), options->backend + "_depth_sweep.csv");
     } else if (options->output_csv.empty()) {
         options->output_csv = PathJoin(DirName(options->manifest_paths.front()),
                                        options->backend + "_results.csv");

@@ -118,6 +118,7 @@ if(NOT WIN32)
 
     add_executable(nsbench_run apps/nsbench_run.cpp)
     target_link_libraries(nsbench_run PRIVATE nsbench_common nsbench_masstree)
+    target_compile_options(nsbench_run PRIVATE -include config.h)
     target_compile_definitions(nsbench_run PRIVATE NSBENCH_HAVE_ROCKSDB=${NSBENCH_HAVE_ROCKSDB_FLAG})
     if(TARGET nsbench_rocks)
         target_link_libraries(nsbench_run PRIVATE nsbench_rocks)
