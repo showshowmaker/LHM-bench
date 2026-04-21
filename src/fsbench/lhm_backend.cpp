@@ -14,6 +14,10 @@ uint64_t NowNs() {
             std::chrono::steady_clock::now().time_since_epoch()).count());
 }
 
+MasstreeLHM::inode_ref ToInodeRef(uint64_t inode_id) {
+    return MasstreeLHM::make_inode_ref(static_cast<uint32_t>(inode_id), 0);
+}
+
 }  // namespace
 
 LhmBackend::LhmBackend(LhmBackendOptions options)
@@ -47,9 +51,9 @@ bool LhmBackend::Build(const std::vector<NamespaceEntry>& entries,
 
         bool ok = false;
         if (entry.type == NodeType::kDirectory) {
-            ok = ns_.mkdir(entry.path, entry.inode_id, *ti_);
+            ok = ns_.mkdir(entry.path, ToInodeRef(entry.inode_id), *ti_);
         } else {
-            ok = ns_.creat_file(entry.path, entry.inode_id, *ti_);
+            ok = ns_.creat_file(entry.path, ToInodeRef(entry.inode_id), *ti_);
         }
         if (!ok) {
             if (error) {
@@ -126,7 +130,7 @@ bool LhmBackend::LookupOnly(const PreparedPath& path,
         return false;
     }
 
-    uint64_t inode = 0;
+    MasstreeLHM::inode_ref inode = MasstreeLHM::make_inode_ref(0, 0);
     const uint64_t begin = NowNs();
     const bool found = ns_.lookup_inode(path.normalized, inode, *ti_);
     const uint64_t end = NowNs();
