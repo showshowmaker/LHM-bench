@@ -25,6 +25,17 @@ set(NSBENCH_COMMON_SOURCES
     src/nsbench/csv_writer.cpp
 )
 
+set(FSBENCH_SOURCES
+    src/fsbench/path_utils.cpp
+    src/fsbench/workload.cpp
+    src/fsbench/slab_sampler.cpp
+    src/fsbench/proc_mem_sampler.cpp
+    src/fsbench/cache_control.cpp
+    src/fsbench/ext4_backend.cpp
+    src/fsbench/lhm_backend.cpp
+    src/fsbench/csv_writer.cpp
+)
+
 add_library(nsbench_common STATIC ${NSBENCH_COMMON_SOURCES})
 target_include_directories(nsbench_common
     PUBLIC
@@ -123,4 +134,24 @@ if(NOT WIN32)
     if(TARGET nsbench_rocks)
         target_link_libraries(nsbench_run PRIVATE nsbench_rocks)
     endif()
+
+    add_library(fsbench STATIC ${FSBENCH_SOURCES})
+    target_include_directories(fsbench
+        PUBLIC
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+            ${CMAKE_CURRENT_SOURCE_DIR}/MasstreeLHM
+            ${CMAKE_CURRENT_BINARY_DIR}/generated
+    )
+    target_compile_options(fsbench PRIVATE -include config.h)
+    target_link_libraries(fsbench PUBLIC nsbench_masstree)
+
+    add_executable(fsbench_memory apps/fsbench_memory.cpp)
+    target_include_directories(fsbench_memory PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/generated)
+    target_compile_options(fsbench_memory PRIVATE -include config.h)
+    target_link_libraries(fsbench_memory PRIVATE fsbench)
+
+    add_executable(fsbench_miss apps/fsbench_miss.cpp)
+    target_include_directories(fsbench_miss PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/generated)
+    target_compile_options(fsbench_miss PRIVATE -include config.h)
+    target_link_libraries(fsbench_miss PRIVATE fsbench)
 endif()

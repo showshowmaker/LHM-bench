@@ -7,4 +7,14 @@ bash ./scripts/run_nsbench_full_pipeline.sh \
   /mnt/batchtest/lhm-bench
 
 python3 ./scripts/analyze_nsbench_results.py \
-  --suite-dir ./mnt/batchtest/lhm-bench/VSIterate
+  --suite-dir /mnt/batchtest/lhm-bench/VSIterate
+
+
+
+./build/fsbench_memory \
+  --backend both \
+  --mount-root /mnt/ext4bench \
+  --output-csv results/fsbench_memory.csv \
+  --depth 8 \
+  --siblings-per-dir 16 \
+  --files-per-leaf 64
