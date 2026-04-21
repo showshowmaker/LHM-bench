@@ -19,3 +19,39 @@ python3 ./scripts/analyze_nsbench_results.py \
   --siblings-per-dir 16 \
   --files-per-leaf 64 \
   --target-file-count 1000000
+
+测 Ext4 冷态路径解析
+  sudo ./build/fsbench_miss \
+  --backend ext4 \
+  --mode cold_dropcache \
+  --op lookup \
+  --query-kind positive \
+  --mount-root /mnt/batchtest/lhm-bench/VSExt4 \
+  --output-csv ./results/fsbench_miss_ext4_cold_lookup.csv \
+  --depth 8 \
+  --siblings-per-dir 16 \
+  --files-per-leaf 64 \
+  --target-file-count 1000000
+测 Ext4 热态路径解析
+  sudo ./build/fsbench_miss \
+  --backend ext4 \
+  --mode warm \
+  --op lookup \
+  --query-kind positive \
+  --mount-root /mnt/batchtest/lhm-bench/VSExt4 \
+  --output-csv ./results/fsbench_miss_ext4_warm_lookup.csv \
+  --depth 8 \
+  --siblings-per-dir 16 \
+  --files-per-leaf 64 \
+  --target-file-count 1000000
+测 LHM lookup
+  ./build/fsbench_miss \
+  --backend lhm \
+  --mode warm \
+  --op lookup \
+  --query-kind positive \
+  --output-csv ./results/fsbench_miss_lhm_lookup.csv \
+  --depth 8 \
+  --siblings-per-dir 16 \
+  --files-per-leaf 64 \
+  --target-file-count 1000000
