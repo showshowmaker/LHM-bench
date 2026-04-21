@@ -13,6 +13,26 @@
 
 namespace {
 
+class Ext4CleanupGuard {
+public:
+    explicit Ext4CleanupGuard(fsbench::Ext4Backend* backend)
+        : backend_(backend) {
+    }
+
+    ~Ext4CleanupGuard() {
+        if (!backend_) {
+            return;
+        }
+        std::string error;
+        if (!backend_->CleanupData(&error)) {
+            std::cerr << "warning: failed to cleanup ext4 mount root: " << error << '\n';
+        }
+    }
+
+private:
+    fsbench::Ext4Backend* backend_;
+};
+
 struct CliOptions {
     std::string backend = "both";
     std::string mode = "warm";
@@ -270,6 +290,7 @@ int main(int argc, char** argv) {
 
         if (options.backend == "ext4" || options.backend == "both") {
             fsbench::Ext4Backend ext4(fsbench::Ext4BackendOptions{options.mount_root, true, false});
+            Ext4CleanupGuard cleanup_guard(&ext4);
             if (!PrepareBackend(&ext4, workload, &error)) {
                 std::cerr << "ext4 workload build failed: " << error << '\n';
                 return 1;

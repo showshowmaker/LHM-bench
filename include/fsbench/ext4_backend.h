@@ -18,6 +18,8 @@ public:
 
     const char* Name() const noexcept override;
 
+    bool CleanupData(std::string* error) const;
+
     bool Build(const std::vector<NamespaceEntry>& entries,
                std::string* error) override;
 

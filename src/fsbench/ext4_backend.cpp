@@ -33,6 +33,32 @@ const char* Ext4Backend::Name() const noexcept {
     return "ext4";
 }
 
+bool Ext4Backend::CleanupData(std::string* error) const {
+    if (options_.mount_root.empty()) {
+        if (error) {
+            *error = "ext4 mount root is empty";
+        }
+        return false;
+    }
+
+    try {
+        std::filesystem::create_directories(options_.mount_root);
+        for (const auto& entry : std::filesystem::directory_iterator(options_.mount_root)) {
+            std::filesystem::remove_all(entry.path());
+        }
+    } catch (const std::exception& ex) {
+        if (error) {
+            *error = ex.what();
+        }
+        return false;
+    }
+
+    if (error) {
+        error->clear();
+    }
+    return true;
+}
+
 bool Ext4Backend::Build(const std::vector<NamespaceEntry>& entries,
                         std::string* error) {
     if (options_.mount_root.empty()) {
@@ -41,7 +67,9 @@ bool Ext4Backend::Build(const std::vector<NamespaceEntry>& entries,
         }
         return false;
     }
-    std::filesystem::create_directories(options_.mount_root);
+    if (!CleanupData(error)) {
+        return false;
+    }
     for (const NamespaceEntry& entry : entries) {
         if (!BuildOne(entry, error)) {
             return false;

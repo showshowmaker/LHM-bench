@@ -193,4 +193,10 @@ python3 ./scripts/analyze_fsbench_memory.py \
 - `inode_cache`
 - `ext4_inode_cache`
 
+## Auto Cleanup
+
+- `fsbench_memory` now clears all data under `--mount-root` before it builds the Ext4 workload.
+- `fsbench_memory` also clears all data under `--mount-root` again before the process exits.
+- The mount directory itself is kept. Only its children are removed.
+
 三者在不同阶段的贡献。

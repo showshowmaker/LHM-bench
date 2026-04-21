@@ -175,3 +175,8 @@ python3 ./scripts/analyze_fsbench_miss.py \
 
 - Ext4 在 `cold_dropcache` 下的 `p99_ns` 明显高于 `warm`
 - LHM 的路径解析延迟曲线相对更稳定
+## Auto Cleanup
+
+- `fsbench_miss` now clears all data under `--mount-root` before it builds the Ext4 workload.
+- `fsbench_miss` also clears all data under `--mount-root` again before the process exits.
+- The mount directory itself is kept. Only its children are removed.
