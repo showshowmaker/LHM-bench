@@ -12,6 +12,7 @@ struct WorkloadOptions {
     uint32_t depth = 8;
     uint32_t siblings_per_dir = 16;
     uint32_t files_per_leaf = 64;
+    uint64_t target_file_count = 0;
     uint32_t positive_queries = 10000;
     uint32_t negative_queries = 10000;
     uint32_t seed = 1;

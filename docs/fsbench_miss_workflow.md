@@ -44,7 +44,8 @@ cmake --build build -j"$(nproc)"
   --output-csv ./results/fsbench_miss.csv \
   --depth 8 \
   --siblings-per-dir 16 \
-  --files-per-leaf 64
+  --files-per-leaf 64 \
+  --target-file-count 1000000
 ```
 
 运行冷态 Ext4 路径解析：
@@ -95,6 +96,8 @@ cmake --build build -j"$(nproc)"
 - `--depth`
 - `--siblings-per-dir`
 - `--files-per-leaf`
+- `--target-file-count`
+  - 总文件数目标；设置后文件会分散到多个叶子目录，更适合大规模 namespace
 - `--positive-queries`
 - `--negative-queries`
 - `--seed`

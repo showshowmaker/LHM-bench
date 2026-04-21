@@ -23,6 +23,7 @@ struct CliOptions {
     uint32_t depth = 8;
     uint32_t siblings_per_dir = 16;
     uint32_t files_per_leaf = 64;
+    uint64_t target_file_count = 0;
     uint32_t positive_queries = 10000;
     uint32_t negative_queries = 10000;
     uint32_t seed = 1;
@@ -79,6 +80,8 @@ bool ParseArgs(int argc, char** argv, CliOptions* out, std::string* error) {
             out->siblings_per_dir = static_cast<uint32_t>(std::stoul(require_value("--siblings-per-dir")));
         } else if (arg == "--files-per-leaf") {
             out->files_per_leaf = static_cast<uint32_t>(std::stoul(require_value("--files-per-leaf")));
+        } else if (arg == "--target-file-count") {
+            out->target_file_count = static_cast<uint64_t>(std::stoull(require_value("--target-file-count")));
         } else if (arg == "--positive-queries") {
             out->positive_queries = static_cast<uint32_t>(std::stoul(require_value("--positive-queries")));
         } else if (arg == "--negative-queries") {
@@ -251,6 +254,7 @@ int main(int argc, char** argv) {
         workload_options.depth = options.depth;
         workload_options.siblings_per_dir = options.siblings_per_dir;
         workload_options.files_per_leaf = options.files_per_leaf;
+        workload_options.target_file_count = options.target_file_count;
         workload_options.positive_queries = options.positive_queries;
         workload_options.negative_queries = options.negative_queries;
         workload_options.seed = options.seed;

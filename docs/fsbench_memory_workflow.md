@@ -42,7 +42,8 @@ cmake --build build -j"$(nproc)"
   --output-csv ./results/fsbench_memory.csv \
   --depth 8 \
   --siblings-per-dir 16 \
-  --files-per-leaf 64
+  --files-per-leaf 64 \
+  --target-file-count 1000000
 ```
 
 仅运行 Ext4：
@@ -54,7 +55,8 @@ cmake --build build -j"$(nproc)"
   --output-csv ./results/fsbench_memory_ext4.csv \
   --depth 8 \
   --siblings-per-dir 16 \
-  --files-per-leaf 64
+  --files-per-leaf 64 \
+  --target-file-count 1000000
 ```
 
 仅运行 LHM：
@@ -65,7 +67,8 @@ cmake --build build -j"$(nproc)"
   --output-csv ./results/fsbench_memory_lhm.csv \
   --depth 8 \
   --siblings-per-dir 16 \
-  --files-per-leaf 64
+  --files-per-leaf 64 \
+  --target-file-count 1000000
 ```
 
 ## 4. 主要参数
@@ -82,6 +85,8 @@ cmake --build build -j"$(nproc)"
   - 每层附加的兄弟目录数
 - `--files-per-leaf`
   - 最深叶子目录下的文件数
+- `--target-file-count`
+  - 总文件数目标；设置后，文件会均匀分散到多个叶子目录，而不是集中在单个最深目录
 - `--seed`
   - workload 随机种子
 

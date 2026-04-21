@@ -13,8 +13,9 @@ python3 ./scripts/analyze_nsbench_results.py \
 
 ./build/fsbench_memory \
   --backend both \
-  --mount-root /mnt/ext4bench \
+  --mount-root /mnt/batchtest/lhm-bench/VSExt4 \
   --output-csv results/fsbench_memory.csv \
   --depth 8 \
   --siblings-per-dir 16 \
-  --files-per-leaf 64
+  --files-per-leaf 64 \
+  --target-file-count 1000000
